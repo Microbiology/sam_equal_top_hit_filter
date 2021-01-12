@@ -3,12 +3,16 @@
 # Purpose of this script is to find all SAM file seconary alignments
 # whose quality match their associated primary alignment.
 
+# TODO: I should also add position in case the same read maps multiple
+# portions of the same genome
+
 using Pkg
 Pkg.add("Bio")
 
 # Use the package BioAlignments
 # https://biojulia.net/BioAlignments.jl/latest/hts-files.html#SAM-and-BAM-Records-1
 using BioAlignments
+using DelimitedFiles
 
 # Open the SAM file
 reader = open(SAM.Reader, "test.sam")
@@ -28,7 +32,10 @@ for record in reader
 			println("Looks like its not paired")
 			rpair = "Fail"
 		end
-		tcombo = string(tname, "-", rpair)
+		# We should also be including the position in case
+		# the read is mapped multiple times on same reference
+		tpos = SAM.position(record)
+		tcombo = string(tname, "-", rpair, "-", tpos)
 		# First or second in pair
 		println(tcombo)
 		if tcombo in keys(counts)
@@ -60,7 +67,8 @@ for record in reader
 			println("Looks like its not paired")
 			rpair = "Fail"
 		end
-		tcombo = string(tname, "-", rpair)
+		tpos = SAM.position(record)
+		tcombo = string(tname, "-", rpair, "-", tpos)
 
 		println(tcombo)
 		if tcombo in keys(primaryd)
@@ -80,6 +88,9 @@ end
 # Find matching best hits among each read
 # Report the read and alignment pair
 reader = open(SAM.Reader, "test.sam")
+# Count primary pairs
+primarypairs = Dict{String,Int64}()
+
 for record in reader
 	# Only look at what mapped, always
 	if SAM.ismapped(record)
@@ -99,7 +110,18 @@ for record in reader
 			println("Looks like its not paired")
 			rpair = "Fail"
 		end
-		tcombo = string(tname, "-", rpair)
+		tpos = SAM.position(record)
+		tcombo = string(tname, "-", rpair, "-", tpos)
+
+		# We want to count the read-pair combos because we only want
+		# to keep those with two (a full paired match)
+		combotr = string(tname, "-", refn, "-", tpos)
+		# And establish the counts starting at zero
+		if combotr in keys(primarypairs)
+			#nothing
+		else
+			primarypairs[combotr] = 0
+		end
 
 		println("Searching ", tcombo, "-", refn)
 		# Check if the read is a multimapper
@@ -107,6 +129,8 @@ for record in reader
 			# Check if it is a secondary hit
 			if SAM.isprimary(record)
 				println(tcombo, "---", refn)
+				# Keep track of primary alignment counts
+				primarypairs[combotr] += 1
 			else
 				# Determine if this hit is the same as the
 				# primary alignment of the read
@@ -116,6 +140,7 @@ for record in reader
 				if isequal(mapq, aqual)
 					if isequal(cig, acigar)
 						println(tcombo, "---", refn)
+						primarypairs[combotr] += 1
 					end
 				end
 			end
@@ -125,18 +150,25 @@ for record in reader
 	end
 end
 
+# Print output to a 2 dim array for now
 
-reader = open(SAM.Reader, "test.sam")
-for record in reader
-	println(SAM.alignment(record))
+outarray = Array{Char}(undef, 0, 3)
+for (key, value) in primarypairs
+	if isequal(value, 2)
+		karray = split(key, "-")
+		tread = karray[1]
+		tref = karray[2]
+		spos = karray[3]
+		println(karray)
+		global outarray = [outarray; [tread tref spos]]
+		# push!(outarray, karray)
+	end
 end
 
-flagresult = collect(last(bitstring(99), 12))
-Int64(flagresult[12])
+# Write the final array to tsv file for reference
+writedlm( "testout.txt",  outarray, '\t')
 
 
-# Needs to be paired
-#    Read paired
-#    Is it first or second in pair
+
 
 
