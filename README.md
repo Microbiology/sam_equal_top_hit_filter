@@ -27,7 +27,7 @@ r001	ref	7	37
 r001	ref2	5	31
 ```
 
-## How it works
+## How It Works
 
 This script runs in three steps. First a loop will identify "multimapper" reads by counting the frequency of the read pairs.
 
