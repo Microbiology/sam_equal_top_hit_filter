@@ -178,20 +178,22 @@ for record in reader
 			end
 		elseif counts[multimapperid] == 1
 			println(tcombo, "---", refn)
+			primarypairs[combotr] += 1
 		end
 	end
 end
 
 # Print output to a 2 dim array for now
-outarray = Array{Char}(undef, 0, 3)
+outarray = Array{Char}(undef, 0, 4)
 for (key, value) in primarypairs
 	if isequal(value, 2)
 		karray = split(key, "-")
 		tread = karray[1]
 		tref = karray[2]
 		spos = karray[3]
+		srpos = karray[4]
 		println(karray)
-		global outarray = [outarray; [tread tref spos]]
+		global outarray = [outarray; [tread tref spos srpos]]
 		# push!(outarray, karray)
 	end
 end
