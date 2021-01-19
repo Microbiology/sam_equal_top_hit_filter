@@ -6,13 +6,15 @@ SAM file presents a single alignment for a given sequence as a "primary alignmen
 
 The input file is a toy sam file with five references and two read pairs. This is captures in `test1.sam`.
 
-- `r001`=`ref` | This is not a primary alignment but is identical to the primary alignment.
-- `r001`=`ref` | This is another equal alignment to ref, although at a different position.
-- `r001`=`ref2` | This is the primary alignment for r001
-- `r001`=`ref3` | This is an alignment in which both pairs are lower quality than the primary alignemnt
-- `r001`=`ref4` | This is an alignment in which one of the paired reads is lower quality than the primary alignment.
-- `r001`=`ref5` | This is an alignment in which one of the paired reads is lower quality than the primary alignment.
-- `r002`=`ref` | This is a primary alignment for the second read pair. This is not a "multi-mapper".
+- `r001`=`ref`   This is not a primary alignment but is identical to the primary alignment.
+- `r001`=`ref`   This is another equal alignment to ref, although at a different position.
+- `r001`=`ref2`   This is the primary alignment for r001
+- `r001`=`ref3`   This is an alignment in which both pairs are lower quality than the primary alignemnt
+- `r001`=`ref4`   This is an alignment in which one of the paired reads is lower quality than the primary alignment.
+- `r001`=`ref5`   This is an alignment in which one of the paired reads is lower quality than the primary alignment.
+- `r002`=`ref`   This is a primary alignment for the second read pair. This is not a "multi-mapper".
+
+To run a test: `julia TopBestHits.jl -i test1.sam -o testout.txt`
 
 ## Expected Output
 

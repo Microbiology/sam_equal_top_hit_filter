@@ -3,19 +3,44 @@
 # Purpose of this script is to find all SAM file seconary alignments
 # whose quality match their associated primary alignment.
 
-# TODO: I should also add position in case the same read maps multiple
-# portions of the same genome
-
-using Pkg
-Pkg.add("Bio")
+# using Pkg
+# Pkg.add("Bio")
+# Pkg.add("ArgParse")
 
 # Use the package BioAlignments
 # https://biojulia.net/BioAlignments.jl/latest/hts-files.html#SAM-and-BAM-Records-1
 using BioAlignments
 using DelimitedFiles
+using ArgParse
+
+# Setup the command line arguments
+s = ArgParseSettings(
+	version = "0.1",
+	add_version = true
+	)
+@add_arg_table s begin
+	"-i", "--input"
+		help = "Input file name."
+		required = true
+	"-o", "--output"
+		help = "Output file name."
+		required = true
+end
+
+parsed_args = parse_args(ARGS, s)
+
+println("Parsed args:")
+for (arg,val) in parsed_args
+    println("  $arg  =>  $val")
+end
+
 
 # Open the SAM file
-reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, parsed_args["input"])
+
+# Testing can look like this:
+# reader = open(SAM.Reader, "test1.sam")
+
 # Make a count hash to capture multi-mappers
 # Here we do it only at the read level
 counts = Dict{String,Int64}()
@@ -58,7 +83,10 @@ end
 # Get a dictionary of the primary alignments
 # Should only be one primary alignment per read
 # Key is the read, value is the reference
-reader = open(SAM.Reader, "test1.sam")
+
+reader = open(SAM.Reader, parsed_args["input"])
+# reader = open(SAM.Reader, "test1.sam")
+
 primaryd = Dict{String,Array}()
 for record in reader
 	if SAM.ismapped(record)
@@ -103,7 +131,9 @@ end
 
 # Find matching best hits among each read
 # Report the read and alignment pair
-reader = open(SAM.Reader, "test1.sam")
+# reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, parsed_args["input"])
+
 # Count primary pairs
 primarypairs = Dict{String,Int64}()
 
@@ -199,9 +229,7 @@ for (key, value) in primarypairs
 end
 
 # Write the final array to tsv file for reference
-writedlm( "testout.txt",  outarray, '\t')
-
-
-
+# writedlm( "testout.txt",  outarray, '\t')
+writedlm( parsed_args["output"],  outarray, '\t')
 
 
