@@ -1,1 +1,3 @@
-r001	ref2	7
+r001	ref	1
+r001	ref	7
+r001	ref2	5
