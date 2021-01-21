@@ -61,7 +61,7 @@ for record in reader
 			trpos = SAM.position(record)
 			tpos = SAM.nextposition(record)
 		else
-			println("Looks like its not paired")
+			# println("Looks like its not paired")
 			rpair = "Fail"
 		end
 
@@ -71,13 +71,18 @@ for record in reader
 		tcombo = string(tname, "-", rpair)
 
 		# First or second in pair
-		println(tcombo)
+		# println(tcombo)
 		if tcombo in keys(counts)
 			counts[tcombo] += 1
 		else
 			counts[tcombo] = 1
 		end
 	end
+end
+
+println("Printing Counts:")
+for (key,val) in counts
+    println("  $key  =>  $val")
 end
 
 # Get a dictionary of the primary alignments
@@ -90,9 +95,23 @@ reader = open(SAM.Reader, parsed_args["input"])
 primaryd = Dict{String,Array}()
 for record in reader
 	if SAM.ismapped(record)
+		# This needs to be defined so that the scope carries
+		# through to the rest of the loop
+		mapq = 255
+
 		tname = SAM.tempname(record)
+		# println(tname)
 		refn = SAM.refname(record)
-		mapq = Int64(SAM.mappingquality(record))
+		# println(refn)
+		# Exception handling in case mapping quality is 255,
+		# which means it does not exist
+		try
+			mapq = Int64(SAM.mappingquality(record))
+		catch
+			# 255 means it does not exist
+			mapq = 255
+		end
+		# println(mapq)
 		cig = SAM.cigar(record)
 
 		tflag = SAM.flag(record)
@@ -108,25 +127,30 @@ for record in reader
 			trpos = SAM.position(record)
 			tpos = SAM.nextposition(record)
 		else
-			println("Looks like its not paired")
+			# println("Looks like its not paired")
 			rpair = "Fail"
 		end
 
 		tcombo = string(tname, "-", rpair)
 
-		println(tcombo)
+		# println(tcombo)
 		if tcombo in keys(primaryd)
-			println("Warning: Potentially multiple primary alignments!")
+			# println("Warning: Potentially multiple primary alignments!")
 		else
 			if SAM.isprimary(record)
-				println("Adding")
-				println(mapq)
+				# println("Adding")
+				# println(mapq)
 				primaryd[tcombo] = [refn, tpos, trpos, mapq, cig]
 			else
-				println("Not a primary alignment.")
+				# println("Not a primary alignment.")
 			end
 		end
 	end
+end
+
+println("Printing Primary Aligment Stats:")
+for (key,val) in primaryd
+    println("  $key  =>  $val")
 end
 
 # Find matching best hits among each read
@@ -140,10 +164,17 @@ primarypairs = Dict{String,Int64}()
 for record in reader
 	# Only look at what mapped, always
 	if SAM.ismapped(record)
+		mapq = 255
+
 		#Get the ID information
 		tname = SAM.tempname(record)
 		refn = SAM.refname(record)
-		mapq = Int64(SAM.mappingquality(record))
+		try
+			mapq = Int64(SAM.mappingquality(record))
+		catch
+			# 255 means it does not exist
+			mapq = 255
+		end
 		cig = SAM.cigar(record)
 
 		tflag = SAM.flag(record)
@@ -159,7 +190,7 @@ for record in reader
 			trpos = SAM.position(record)
 			tpos = SAM.nextposition(record)
 		else
-			println("Looks like its not paired")
+			# println("Looks like its not paired")
 			rpair = "Fail"
 		end
 
@@ -178,13 +209,13 @@ for record in reader
 			primarypairs[combotr] = 0
 		end
 
-		println("Searching ", tcombo, "-", refn)
-		println("Multimapper ID is ", multimapperid)
+		# println("Searching ", tcombo, "-", refn)
+		# println("Multimapper ID is ", multimapperid)
 		# Check if the read is a multimapper
 		if counts[multimapperid] > 1
 			# Check if it is a secondary hit
 			if SAM.isprimary(record)
-				println(tcombo, "---", refn)
+				# println(tcombo, "---", refn)
 				# Keep track of primary alignment counts
 				primarypairs[combotr] += 1
 			else
@@ -200,17 +231,22 @@ for record in reader
 				else
 					if isequal(mapq, aqual)
 						if isequal(cig, acigar)
-							println(tcombo, "---", refn)
+							# println(tcombo, "---", refn)
 							primarypairs[combotr] += 1
 						end
 					end
 				end
 			end
 		elseif counts[multimapperid] == 1
-			println(tcombo, "---", refn)
+			# println(tcombo, "---", refn)
 			primarypairs[combotr] += 1
 		end
 	end
+end
+
+println("Printing Primary Pairs:")
+for (key,val) in primarypairs
+    println("  $key  =>  $val")
 end
 
 # Print output to a 2 dim array for now
@@ -222,7 +258,7 @@ for (key, value) in primarypairs
 		tref = karray[2]
 		spos = karray[3]
 		srpos = karray[4]
-		println(karray)
+		# println(karray)
 		global outarray = [outarray; [tread tref spos srpos]]
 		# push!(outarray, karray)
 	end
