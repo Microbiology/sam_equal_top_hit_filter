@@ -39,7 +39,7 @@ end
 reader = open(SAM.Reader, parsed_args["input"])
 
 # Testing can look like this:
-# reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, "test1.sam")
 
 # Make a count hash to capture multi-mappers
 # Here we do it only at the read level
@@ -90,7 +90,7 @@ end
 # Key is the read, value is the reference
 
 reader = open(SAM.Reader, parsed_args["input"])
-# reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, "test1.sam")
 
 primaryd = Dict{String,Array}()
 for record in reader
@@ -155,7 +155,7 @@ end
 
 # Find matching best hits among each read
 # Report the read and alignment pair
-# reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, "test1.sam")
 reader = open(SAM.Reader, parsed_args["input"])
 
 # Count primary pairs
@@ -244,13 +244,17 @@ for record in reader
 	end
 end
 
+
 println("Printing Primary Pairs:")
 for (key,val) in primarypairs
     println("  $key  =>  $val")
 end
 
+
 # Print output to a 2 dim array for now
 outarray = Array{Char}(undef, 0, 4)
+filterarray = Array{String}(undef, 0, 1)
+
 for (key, value) in primarypairs
 	if isequal(value, 2)
 		karray = split(key, "-")
@@ -261,11 +265,77 @@ for (key, value) in primarypairs
 		# println(karray)
 		global outarray = [outarray; [tread tref spos srpos]]
 		# push!(outarray, karray)
+		# Also make an array of values that pass the two test
+		global filterarray = [filterarray; [key]]
 	end
 end
 
 # Write the final array to tsv file for reference
 # writedlm( "testout.txt",  outarray, '\t')
-writedlm( parsed_args["output"],  outarray, '\t')
+writedlm(parsed_args["output"],  outarray, '\t')
+
+
+
+
+# We also want to write the sam file
+# First get in the sam file and pull the header
+reader = open(SAM.Reader, "test1.sam")
+samhead = header(reader)
+
+samw = SAM.Writer(open("testout.sam", "w"), samhead)
+
+for record in reader
+	# Only look at what mapped, always
+	if SAM.ismapped(record)
+		mapq = 255
+
+		#Get the ID information
+		tname = SAM.tempname(record)
+		refn = SAM.refname(record)
+		try
+			mapq = Int64(SAM.mappingquality(record))
+		catch
+			# 255 means it does not exist
+			mapq = 255
+		end
+
+		tflag = SAM.flag(record)
+		flagresult = collect(last(bitstring(tflag), 12))
+		if Int64(flagresult[6]) == 49
+			rpair = "First"
+			# Make sure to include position for better ID
+			tpos = SAM.position(record)
+			trpos = SAM.nextposition(record)
+		elseif Int64(flagresult[5]) == 49
+			rpair = "Second"
+			# Reverse for the other paired read
+			trpos = SAM.position(record)
+			tpos = SAM.nextposition(record)
+		else
+			# println("Looks like its not paired")
+			rpair = "Fail"
+		end
+
+		combotr = string(tname, "-", refn, "-", tpos, "-", trpos)
+
+		# Does the combo string match the array
+
+		if combotr in filterarray
+			println(combotr)
+			println(record)
+			write(samw, record)
+		end
+
+	end
+end
+
+for record in reader
+	write(samw, record)
+end
+
+
+write(samw, )
+
+
 
 
