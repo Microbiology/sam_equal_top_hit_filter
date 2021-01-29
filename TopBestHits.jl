@@ -1,8 +1,10 @@
 #!/usr/bin/env julia
 # Geof Hannigan
+
 # Purpose of this script is to find all SAM file seconary alignments
 # whose quality match their associated primary alignment.
 
+# Need to bring in the relevant packages before use
 # using Pkg
 # Pkg.add("Bio")
 # Pkg.add("ArgParse")
@@ -25,6 +27,12 @@ s = ArgParseSettings(
 	"-o", "--output"
 		help = "Output file name."
 		required = true
+	"-s", "--samout"
+		help = "Output file name for sam format."
+		required = true
+	"-v", "--verbose"
+        help = "Show verbose output (includes dictionary values)."
+        action = :store_true
 end
 
 parsed_args = parse_args(ARGS, s)
@@ -39,7 +47,7 @@ end
 reader = open(SAM.Reader, parsed_args["input"])
 
 # Testing can look like this:
-reader = open(SAM.Reader, "test1.sam")
+# reader = open(SAM.Reader, "test1.sam")
 
 # Make a count hash to capture multi-mappers
 # Here we do it only at the read level
@@ -80,9 +88,11 @@ for record in reader
 	end
 end
 
-println("Printing Counts:")
-for (key,val) in counts
-    println("  $key  =>  $val")
+if parsed_args["verbose"]
+	println("Printing Counts:")
+	for (key,val) in counts
+    	println("  $key  =>  $val")
+	end
 end
 
 # Get a dictionary of the primary alignments
@@ -90,7 +100,7 @@ end
 # Key is the read, value is the reference
 
 reader = open(SAM.Reader, parsed_args["input"])
-reader = open(SAM.Reader, "test1.sam")
+# reader = open(SAM.Reader, "test1.sam")
 
 primaryd = Dict{String,Array}()
 for record in reader
@@ -148,14 +158,16 @@ for record in reader
 	end
 end
 
-println("Printing Primary Aligment Stats:")
-for (key,val) in primaryd
-    println("  $key  =>  $val")
+if parsed_args["verbose"]
+	println("Printing Primary Aligment Stats:")
+	for (key,val) in primaryd
+	    println("  $key  =>  $val")
+	end
 end
 
 # Find matching best hits among each read
 # Report the read and alignment pair
-reader = open(SAM.Reader, "test1.sam")
+# reader = open(SAM.Reader, "test1.sam")
 reader = open(SAM.Reader, parsed_args["input"])
 
 # Count primary pairs
@@ -245,9 +257,11 @@ for record in reader
 end
 
 
-println("Printing Primary Pairs:")
-for (key,val) in primarypairs
-    println("  $key  =>  $val")
+if parsed_args["verbose"]
+	println("Printing Primary Pairs:")
+	for (key,val) in primarypairs
+	    println("  $key  =>  $val")
+	end
 end
 
 
@@ -279,10 +293,11 @@ writedlm(parsed_args["output"],  outarray, '\t')
 
 # We also want to write the sam file
 # First get in the sam file and pull the header
-reader = open(SAM.Reader, "test1.sam")
+# reader = open(SAM.Reader, "test1.sam")
+reader = open(SAM.Reader, parsed_args["input"])
 samhead = header(reader)
 
-samw = SAM.Writer(open("testout.sam", "w"), samhead)
+samw = SAM.Writer(open(parsed_args["samout"], "w"), samhead)
 
 for record in reader
 	# Only look at what mapped, always
@@ -321,21 +336,13 @@ for record in reader
 		# Does the combo string match the array
 
 		if combotr in filterarray
-			println(combotr)
-			println(record)
+			# println(filterarray)
+			# println(combotr)
 			write(samw, record)
 		end
 
 	end
 end
 
-for record in reader
-	write(samw, record)
-end
-
-
-write(samw, )
-
-
-
+close(samw)
 
