@@ -14,7 +14,7 @@ The input file is a toy sam file with five references and two read pairs. This i
 - `r001`=`ref5`   This is an alignment in which one of the paired reads is lower quality than the primary alignment.
 - `r002`=`ref`   This is a primary alignment for the second read pair. This is not a "multi-mapper".
 
-To run a test: `julia TopBestHits.jl -i test1.sam -o testout.txt`
+To run a test: `julia TopBestHits.jl --input test1.sam --output testout.txt --samout testout.sam --verbose`
 
 ## Expected Output
 
