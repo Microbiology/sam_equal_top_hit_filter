@@ -53,7 +53,7 @@ reader = open(SAM.Reader, parsed_args["input"])
 # Here we do it only at the read level
 counts = Dict{String,Int64}()
 for record in reader
-	if SAM.ismapped(record)
+	if SAM.ismapped(record) && SAM.isnextmapped(record)
 		# Get the name
 		tname = SAM.tempname(record)
 		tflag = SAM.flag(record)
@@ -104,7 +104,7 @@ reader = open(SAM.Reader, parsed_args["input"])
 
 primaryd = Dict{String,Array}()
 for record in reader
-	if SAM.ismapped(record)
+	if SAM.ismapped(record) && SAM.isnextmapped(record)
 		# This needs to be defined so that the scope carries
 		# through to the rest of the loop
 		mapq = 255
@@ -175,7 +175,7 @@ primarypairs = Dict{String,Int64}()
 
 for record in reader
 	# Only look at what mapped, always
-	if SAM.ismapped(record)
+	if SAM.ismapped(record) && SAM.isnextmapped(record)
 		mapq = 255
 
 		#Get the ID information
@@ -301,7 +301,7 @@ samw = SAM.Writer(open(parsed_args["samout"], "w"), samhead)
 
 for record in reader
 	# Only look at what mapped, always
-	if SAM.ismapped(record)
+	if SAM.ismapped(record) && SAM.isnextmapped(record)
 		mapq = 255
 
 		#Get the ID information
